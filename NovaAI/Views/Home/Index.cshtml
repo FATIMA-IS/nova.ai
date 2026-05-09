@@ -1,0 +1,52 @@
+﻿@{
+    ViewData["Title"] = "Giriş";
+}
+
+<div class="index-bg">
+    <div class="particles" id="particles"></div>
+
+    <div class="index-card">
+        <div class="index-logo">
+            <span class="index-logo-icon">✦</span>
+            <div>
+                <div class="index-logo-name">NOVA</div>
+                <div class="index-logo-sub">NLP Sosyal Medya Asistanı</div>
+            </div>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="error-box">
+                ⚠ @TempData["Error"]
+            </div>
+        }
+
+        <form method="post" action="/Analysis/Analyze">
+            <div class="index-input-wrap">
+                <input type="text"
+                       name="channelUrl"
+                       class="index-input"
+                       placeholder="youtube.com/@@ veya kanal ID"
+                       required
+                       autocomplete="off" />
+            </div>
+            <button type="submit" class="index-btn">
+                <span>Analiz Et</span>
+                <span>→</span>
+            </button>
+        </form>
+
+        <div class="index-examples">
+            <div class="index-examples-title">Örnek:</div>
+            <div class="index-example-item">• youtube.com/@@mkbhd</div>
+            <div class="index-example-item">• youtube.com/channel/UC...</div>
+            <div class="index-example-item">• @@mkbhd</div>
+        </div>
+    </div>
+
+    <div class="index-star">✦</div>
+</div>
+
+@section Scripts {
+    <script src="~/js/index.js"></script>
+}

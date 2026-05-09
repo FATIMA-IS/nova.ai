@@ -1,0 +1,163 @@
+﻿@model NovaAI.Models.ChannelAnalysis
+@{
+    ViewData["Title"] = "Nova AI - Dashboard";
+}
+
+<div class="bg-mesh"></div>
+
+<div class="app">
+    <header>
+        <div class="logo-orb">✦</div>
+        <div style="display:flex; flex-direction:column;">
+            <div class="logo-name">NOVA</div>
+            <div class="logo-sub">Sosyal Medya Asistanı</div>
+        </div>
+
+        <div class="header-channel" style="margin-left: auto;">
+            <img src="@(Model?.Thumbnail ?? "/default-avatar.png")" class="channel-thumb" alt="Channel Logo" />
+            <div style="display:flex; flex-direction:column;">
+                <div style="font-weight: 600; color: white;">@(Model?.ChannelName ?? "Bilinmeyen Kanal")</div>
+                <div style="font-size: 0.8rem; color: var(--text-sub);">
+                    @FormatNumber(Model?.Subscribers ?? 0) abone
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="badge badge-green">
+                <span class="pulse" style="margin-right: 8px;"></span> Dinliyor
+            </div>
+            <a href="/" style="color: var(--text-sub); text-decoration: none; font-size: 0.9rem; font-weight: 500;">← Yeni Kanal</a>
+        </div>
+    </header>
+
+    <div class="panel-left" id="leftPanel">
+
+        <div class="card" id="overviewCard">
+            <div style="font-size: 0.95rem; color: #fff; margin-bottom: 20px; font-weight: 600;">📊 Genel Kanal Özeti</div>
+
+            <div class="metric-row">
+                <span class="metric-label">Abone</span>
+                <div class="metric-value text-green">@FormatNumber(Model?.Subscribers ?? 0)</div>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Toplam İzlenme</span>
+                <div class="metric-value text-purple">@FormatNumber(Model?.TotalViews ?? 0)</div>
+            </div>
+
+            <div class="metric-row">
+                <span class="metric-label">Video Sayısı</span>
+                <div class="metric-value text-blue">@FormatNumber(Model?.VideoCount ?? 0)</div>
+            </div>
+        </div>
+
+        <div class="card" id="videosCard">
+            <div style="font-size: 0.95rem; color: #fff; margin-bottom: 5px; font-weight: 600;">🎬 En İyi Videolar</div>
+
+            @if (Model?.TopVideos != null && Model.TopVideos.Any())
+            {
+                <ul class="video-list">
+                    @foreach (var video in Model.TopVideos.Take(5))
+                    {
+                        <li>
+                            <span class="video-title" title="@video.Title">@video.Title</span>
+                            <span class="video-views">@FormatNumber(video.ViewCount)</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div style="color: var(--text-sub); font-size: 0.85rem; margin-top: 10px;">Henüz video verisi çekilemedi.</div>
+            }
+        </div>
+
+        <div class="card" id="dynamicCard">
+            <div style="font-size: 0.95rem; color: #fff; margin-bottom: 15px; font-weight: 600;">📈 Analiz Durumu</div>
+            <div style="display:flex; gap: 12px; align-items:center; color: var(--text-sub); font-size: 0.9rem;">
+                <div class="pulse"></div>
+                Nova verileri inceliyor...
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-chat">
+        <div class="chat-header">
+            <span>💬 Konuşma</span>
+            <div class="badge badge-purple" id="msgCount">1 Mesaj</div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="msg">
+                <div class="msg-avatar bot">N</div>
+                <div class="msg-bubble bot">
+                    <strong>@(Model?.ChannelName ?? "Seçilen kanal")</strong> verilerini başarıyla çektim! 🎉
+                    <br /><br />
+                    Kanalın şu an <strong>@FormatNumber(Model?.Subscribers ?? 0)</strong> abonesi ve toplam <strong>@FormatNumber(Model?.TotalViews ?? 0)</strong> izlenmesi bulunuyor.
+                    <br /><br />
+                    İçerik stratejisi, izleyici analizi veya en iyi videoların sırrı hakkında ne öğrenmek istersin?
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="Nova'ya sor... (örn: En çok izlenen videomun başlığı nasıl?)" onkeydown="handleKey(event)"></textarea>
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <div class="panel-right">
+        <div class="agent-header">
+            <span>⚙ Agent Düşünceleri</span>
+            <div class="badge badge-blue">✦ Gemini 3 Flash</div>
+        </div>
+
+        <div class="agent-events" id="agentEvents">
+            <div class="event">
+                <div class="event-header">
+                    <span class="event-type tool">TOOL</span>
+                    <span>✓</span>
+                </div>
+                <div style="margin-bottom: 8px; font-weight: bold; font-size: 0.85rem; color: white;">get_channel_stats</div>
+                <div class="event-body">
+                    <span class="event-key">channel:</span> @(Model?.ChannelName ?? "Bilinmiyor")<br />
+                    <span class="event-key">subscribers:</span> @FormatNumber(Model?.Subscribers ?? 0)<br />
+                    <span class="event-key">videos:</span> @(Model?.VideoCount ?? 0)
+                </div>
+            </div>
+
+            <div class="event">
+                <div class="event-header">
+                    <span class="event-type result">RESULT</span>
+                    <span>✓</span>
+                </div>
+                <div style="margin-bottom: 8px; font-weight: bold; font-size: 0.85rem; color: white;">Analiz Tamamlandı</div>
+                <div class="event-body">
+                    <span class="event-key">top_videos:</span> @(Model?.TopVideos?.Count ?? 0)<br />
+                    <span class="event-key">status:</span> ready
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // C# modelinden gelen verileri JavaScript tarafına güvenli aktarım
+        const CHANNEL_ID = "@(Model?.ChannelId ?? "")";
+        const CHANNEL_NAME = "@(Model?.ChannelName ?? "")";
+    </script>
+    <script src="~/js/dashboard.js"></script>
+}
+
+@functions {
+    // Sayıları 1.2M, 50K şeklinde daha okunabilir hale getiren metot
+    string FormatNumber(long n)
+    {
+        if (n >= 1_000_000_000) return $"{n / 1_000_000_000.0:F1}B";
+        if (n >= 1_000_000) return $"{n / 1_000_000.0:F1}M";
+        if (n >= 1_000) return $"{n / 1_000.0:F1}K";
+        return n.ToString();
+    }
+}
